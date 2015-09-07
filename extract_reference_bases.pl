@@ -42,10 +42,10 @@ while (my $seq = $seq_io->next_seq){
 	$sequences{$seq_name} = $seq;
 
 	#header
-	push @header_lines, '##contig=<ID=' . $seq_name . ',length=' . $seq->length . ',assembly=b37>'
+	push @header_lines, '##contig=<ID=' . $seq_name . ',length=' . $seq->length . ',assembly=b37>';
 }
 
-push @header_lines, '##FORMAT=<ID=GT,Number=1,Type=Integer,Description=\'Genotype\'';
+push @header_lines, '##FORMAT=<ID=GT,Number=1,Type=Integer,Description=\'Genotype\'>';
 
 #Open the infinium manifest file
 open MANIFEST, $manifest or die "Unable to open manifest!\n";
