@@ -111,6 +111,10 @@ while ($row = <MANIFEST>){
 	my $current_ref_base = '';
 	
 	#deal with markers in the infinium manifest with pos 0 and chr 0
+	if ($snp_pos eq "N/A"){
+		$snp_pos = 0;
+	}
+
 	if ($snp_pos == 0){
 		if (($snp_chr eq "0") || ($snp_chr eq "Unknown")){
 			$current_ref_id = "Unknown";
