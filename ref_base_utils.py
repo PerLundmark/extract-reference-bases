@@ -26,5 +26,3 @@ def build_indexed_seq_dict(fasta_filename):
         A dict of indexed SeqRecord objects
     """
     return SeqIO.index(fasta_filename, "fasta")
-
-

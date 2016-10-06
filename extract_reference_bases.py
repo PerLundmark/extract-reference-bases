@@ -25,4 +25,6 @@ header_lines.append("##reference=file://" + args.genome)
 header_lines.append("##phasing=none")
 
 references = ref_base_utils.build_seq_dict(args.genome)
+ref_keys = references.keys()
+
 
