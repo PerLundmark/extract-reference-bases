@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import ref_base_utils
 from datetime import date
 
 parser = argparse.ArgumentParser(description="Generate a reference base information file for Chiasma VCF exports (Illumina manifest and Agena/general format supported)")
@@ -19,4 +20,5 @@ header_lines.append("##source=extract_reference_bases.pl_and_chiasma")
 header_lines.append("##reference=file://" + args.genome)
 header_lines.append("##phasing=none")
 
+sequences = ref_base_utils.build_seq_dict(args.genome)
 
