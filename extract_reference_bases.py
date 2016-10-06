@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-
+"""
+A script that extracts reference genome bases for
+genotyped positions found in the manifest of a genotyping chip
+or similar.
+"""
 import argparse
 import ref_base_utils
 from datetime import date
@@ -20,5 +24,5 @@ header_lines.append("##source=extract_reference_bases.pl_and_chiasma")
 header_lines.append("##reference=file://" + args.genome)
 header_lines.append("##phasing=none")
 
-sequences = ref_base_utils.build_seq_dict(args.genome)
+references = ref_base_utils.build_seq_dict(args.genome)
 
