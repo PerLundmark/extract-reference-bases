@@ -20,11 +20,13 @@ def build_seq_dict(fasta_filename):
     records_dict = {}
 
     for record in records:
+        print ("Reading ", record.id)
         info_record = (record.id, len(record))
         records_info.append(info_record)
         records_dict[record.id] = record
 
     return (records_info, records_dict)
+
 
 def build_indexed_seq_dict(fasta_filename):
     """Builds a dict-like object of Biopython SeqRecord objects from a fasta file (indexed on disk)
@@ -36,6 +38,26 @@ def build_indexed_seq_dict(fasta_filename):
         A dict of indexed SeqRecord objects
     """
     return SeqIO.index(fasta_filename, "fasta")
+
+
+def get_reference_info(seq_dict, sequence_name, position):
+    """ Returns the reference base in a specific sequence and position (in general chromosome and position from a
+    reference genome)
+
+    Args:
+        seq_dict (dict): The dict of SeqRecords keyed on sequence id.
+        sequence_name (str): The name of the sequence/chromosome.
+        position (int): The base position to extract.
+
+    Returns:
+        A tuple with (name(str), comment(str), reference base(str), reference length(int)) with info from the reference sequence.
+    """
+    ref_name = seq_dict[sequence_name].name
+    ref_comment = seq_dict[sequence_name].description
+    ref_base = str(seq_dict[sequence_name].seq[position-1:position])
+    ref_length = len(seq_dict[sequence_name].seq)
+    return (ref_name, ref_comment, ref_base, ref_length)
+
 
 class GenotypingManifest(ABC):
     """Abstract base class for genotyping manifests"""
@@ -95,7 +117,7 @@ class InfiniumManifest(GenotypingManifest):
 
     def get_sort_keys(self, item):
         try:
-            chr_sort_key = self.chr_order.index(item(1))
+            chr_sort_key = self.chr_order.index(item[1])
         except ValueError:
             chr_sort_key = len(self.chr_order) #Sort 0/unknown/strange chromosome entries behind the rest
 

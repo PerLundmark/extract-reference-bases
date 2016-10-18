@@ -35,6 +35,8 @@ for (current_id, current_length) in seq_info_list:
     header_lines.append('##contig=<ID=' + current_id + ',length=' + str(current_length) + ',assembly=' + assembly + '>')
 
 header_lines.append("##FORMAT=<ID=GT,Number=1,Type=Integer,Description='Genotype'>")
+header_lines.append("#refbase_data")
+header_lines.append("\t".join(['snp_name', 'snp_chr', 'snp_pos', 'snp_var', 'snp_ref_strand', 'ref_name', 'ref_comment', 'ref_base', 'ref_length']))
 
 #Read manifest
 if(args.format == 'infinium'):
@@ -49,8 +51,23 @@ manifest.set_chr_order([row[0] for row in seq_info_list])   #[row[i] for i in ma
 manifest.sort_markerlist()
 markers = manifest.get_markerlist()
 
-#Retrieve reference data
-manifest = None
+#Retrieve reference data & print output
+del(manifest)
+try:
+    with open(args.output, "w") as output_file:
+        for line in header_lines:
+            output_file.write(line)
+
+        for marker in markers:
+            (snp_name, snp_chr, snp_pos, snp_var, snp_ref_strand) = marker
+            (ref_name, ref_comment, ref_base, ref_length) = ref_base_utils.get_reference_info(seq_dict, snp_chr, int(snp_pos)) #Need to fix the output so that pos is int from the start
+
+            #output_file.write("\t".join(marker + list(ref_base_utils.get_reference_info(seq_dict, snp_chr, int(snp_pos))))) #fix type of position at build
+            output_file.write("\t".join(marker + [ref_name, ref_comment, ref_base, str(ref_length)]))  #fix type of ref_length at build
+
+
+except IOError:
+    print("Unable to write to outputfile", args.output)
 
 
 print("Hepp")
