@@ -52,11 +52,51 @@ def get_reference_info(seq_dict, sequence_name, position):
     Returns:
         A tuple with (name(str), comment(str), reference base(str), reference length(int)) with info from the reference sequence.
     """
-    ref_name = seq_dict[sequence_name].name
-    ref_comment = seq_dict[sequence_name].description
-    ref_base = str(seq_dict[sequence_name].seq[position-1:position])
-    ref_length = len(seq_dict[sequence_name].seq)
-    return (ref_name, ref_comment, ref_base, ref_length)
+    if(sequence_name == "Unknown" or sequence_name == "0"):
+        ref_name = "Unknown"
+        ref_description = "Chr given as Unknown or 0"
+        ref_base = "N"
+        ref_length = -1
+    elif(position == 0):
+        ref_name = seq_dict[sequence_name].name
+        ref_description = "No position in manifest"
+        ref_base = "N"
+        ref_length = len(seq_dict[sequence_name].seq)
+    elif(position > len(seq_dict[sequence_name].seq)):
+        ref_name = seq_dict[sequence_name].name
+        ref_description = "Position in manifest outside reference sequence"
+        ref_base = "N"
+        ref_length = len(seq_dict[sequence_name].seq)
+    else:
+        ref_name = seq_dict[sequence_name].name
+        ref_description = seq_dict[sequence_name].description
+        ref_base = str(seq_dict[sequence_name].seq[position-1:position])
+        ref_length = len(seq_dict[sequence_name].seq)
+
+    return (ref_name, ref_description, ref_base, ref_length)
+
+def clean_chr_and_pos(chr, pos):
+    """Cleans up the heterogenous Illumina manifest chromsome and position information.
+    XY chromosomes are changed to XY since the positions given in the pseudoautosomal region is X chr positions.
+    For missing data of different kinds, the function returns 0 for positions and Unknown for chromosomes
+
+    Args:
+        chr(str): The SNP chromosome
+        pos(int): The chromsome position of the SNP
+
+    Returns:
+        A tuple with cleaned up (chromosome, position)
+        """
+
+    if (chr == "XY"):
+        chr = "X"
+    elif (chr == 0):
+        chr = "Unknown"
+
+    if (pos == "N/A"):
+        pos = 0
+
+    return (chr, pos)
 
 
 class GenotypingManifest(ABC):
@@ -82,6 +122,7 @@ class GenotypingManifest(ABC):
     def sort_markerlist(self):
         pass
 
+
 class InfiniumManifest(GenotypingManifest):
     """A Class for Illumina Infinium manifests (csv-format)"""
     def read_manifest(self):
@@ -98,15 +139,72 @@ class InfiniumManifest(GenotypingManifest):
                 idx_snp_var = header.index('SNP')
                 idx_snp_ref_strand = header.index('RefStrand')
 
-                manifest_indices = [idx_snp_name, idx_snp_chr, idx_snp_pos, idx_snp_var, idx_snp_ref_strand]
+                #manifest_indices = [idx_snp_name, idx_snp_chr, idx_snp_pos, idx_snp_var, idx_snp_ref_strand]
                 self.marker_list = []
                 for row in reader:
                     if(row[0] == "[Controls]"): #End of SNP data
                         break
-                    self.marker_list.append([row[i] for i in manifest_indices])
+
+                    self.marker_list.append([row[idx_snp_name], row[idx_snp_chr], int(row[idx_snp_pos]), row[idx_snp_var], row[idx_snp_ref_strand]])
+                    #self.marker_list.append([row[i] for i in manifest_indices])
 
         except IOError:
             print("Could not read file: ", self.filename)
+
+
+    def get_markerlist(self):
+        return self.marker_list
+
+    def set_chr_order(self, chr_list):
+        self.chr_order = chr_list
+
+    def get_sort_keys(self, item):
+        try:
+            if (item[1] == "XY"): #Sort XY (pseudoautosomal region) as X since that is the base of the coordinates
+                item[1] = "X"
+
+            chr_sort_key = self.chr_order.index(item[1])
+        except ValueError:
+            chr_sort_key = len(self.chr_order) #Sort 0/unknown/strange chromosome entries behind the rest
+
+        return (chr_sort_key, item[2], item[0])
+
+    def sort_markerlist(self):
+        self.marker_list.sort(key=self.get_sort_keys)
+
+
+class AgenaManifest(GenotypingManifest):
+    def read_manifest(self):
+        try:
+            with open(self.filename, newline='') as agena_manifest:
+                for line in agena_manifest:
+                    if (line[0] == ">"):
+                        data = line[1:]
+                        header_fields = data.split("|")
+                        chr =    header_fields[0]
+                        start =  header_fields[1]
+                        stop =   header_fields[2]
+                        name =   header_fields[3]
+                        source = header_fields[4]
+                        strand = header_fields[5]
+                        var =    header_fields[6]
+
+                        if(strand == "1"):
+                            signed_strand = "+"
+                        elif(strand == "-1"):
+                            signed_strand = "-"
+                        else:
+                            signed_strand = "NA"
+
+                        if (start != stop):
+                            raise ValueError("Start and stop different, variation length > 1 base, start:" + start + " stop:" + stop)
+                        self.marker_list.append([name, chr, int(start), var, signed_strand])
+
+        except IOError:
+            print("Could not read file: ", self.filename)
+
+        except ValueError as err:
+            print(err.message)
 
 
     def get_markerlist(self):
@@ -124,15 +222,4 @@ class InfiniumManifest(GenotypingManifest):
         return (chr_sort_key, item[2], item[0])
 
     def sort_markerlist(self):
-#        import functools
-#        key = functools.partial(self.get_sort_key, data=something)
-#        self.marker_list.sort(key=key)
         self.marker_list.sort(key=self.get_sort_keys)
-
-
-class AgenaManifest(GenotypingManifest):
-    def read_manifest(self, filename):
-        pass
-
-    def get_markerlist(self):
-        pass

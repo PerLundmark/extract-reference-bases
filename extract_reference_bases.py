@@ -24,8 +24,8 @@ current_date = date.today()
 #Build VCF header
 header_lines = []
 header_lines.append("##fileformat=VCFv4.1")
-header_lines.append("fileDate={:%Y%m%d}".format(current_date))
-header_lines.append("##source=extract_reference_bases.pl_and_chiasma")
+header_lines.append("##fileDate={:%Y%m%d}".format(current_date))
+header_lines.append("##source=extract_reference_bases.py_and_chiasma")
 header_lines.append("##reference=file://" + args.genome)
 header_lines.append("##phasing=none")
 
@@ -56,15 +56,22 @@ del(manifest)
 try:
     with open(args.output, "w") as output_file:
         for line in header_lines:
-            output_file.write(line)
+            output_file.write(line + '\n')
 
+        marker_counter = 1
         for marker in markers:
             (snp_name, snp_chr, snp_pos, snp_var, snp_ref_strand) = marker
-            (ref_name, ref_comment, ref_base, ref_length) = ref_base_utils.get_reference_info(seq_dict, snp_chr, int(snp_pos)) #Need to fix the output so that pos is int from the start
+            (clean_snp_chr, clean_snp_pos) = ref_base_utils.clean_chr_and_pos(snp_chr, snp_pos)
+
+            (ref_name, ref_comment, ref_base, ref_length) = ref_base_utils.get_reference_info(seq_dict, clean_snp_chr, clean_snp_pos)
 
             #output_file.write("\t".join(marker + list(ref_base_utils.get_reference_info(seq_dict, snp_chr, int(snp_pos))))) #fix type of position at build
-            output_file.write("\t".join(marker + [ref_name, ref_comment, ref_base, str(ref_length)]))  #fix type of ref_length at build
+            output_file.write("\t".join([snp_name, clean_snp_chr, str(clean_snp_pos), snp_var, snp_ref_strand, ref_name, ref_comment, ref_base, str(ref_length)]) + '\n')
 
+            if (marker_counter % 1000 == 0):
+                print (marker_counter)
+
+            marker_counter += 1
 
 except IOError:
     print("Unable to write to outputfile", args.output)
