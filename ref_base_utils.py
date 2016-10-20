@@ -76,12 +76,12 @@ def get_reference_info(seq_dict, sequence_name, position):
     return (ref_name, ref_description, ref_base, ref_length)
 
 def clean_chr_and_pos(chr, pos):
-    """Cleans up the heterogenous Illumina manifest chromsome and position information.
-    XY chromosomes are changed to XY since the positions given in the pseudoautosomal region is X chr positions.
+    """Cleans up the heterogenous Illumina manifest chromosome and position information.
+    XY chromosomes are changed to X since the positions given in the pseudoautosomal region is X chr positions.
     For missing data of different kinds, the function returns 0 for positions and Unknown for chromosomes
 
     Args:
-        chr(str): The SNP chromosome
+        chr(str): The chromosome of the SNP
         pos(int): The chromsome position of the SNP
 
     Returns:
