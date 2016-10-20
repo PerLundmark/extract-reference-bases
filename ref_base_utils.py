@@ -145,7 +145,9 @@ class InfiniumManifest(GenotypingManifest):
                     if(row[0] == "[Controls]"): #End of SNP data
                         break
 
-                    self.marker_list.append([row[idx_snp_name], row[idx_snp_chr], int(row[idx_snp_pos]), row[idx_snp_var], row[idx_snp_ref_strand]])
+                    var = row[idx_snp_var]
+                    clean_var = var[1:-1]
+                    self.marker_list.append([row[idx_snp_name], row[idx_snp_chr], int(row[idx_snp_pos]), clean_var, row[idx_snp_ref_strand]])
                     #self.marker_list.append([row[i] for i in manifest_indices])
 
         except IOError:
